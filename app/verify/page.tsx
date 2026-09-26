@@ -23,9 +23,7 @@ export default function VerifyPage() {
 
   useEffect(() => {
     const requested = Number(new URLSearchParams(window.location.search).get("secs"));
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time
-    // client-side hydration from window/query params on mount, not a
-    // render-loop risk
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time client-side hydration from window/query params on mount, not a render-loop risk
     if (requested > 0) setSecs(requested);
     setCandidateId(localStorage.getItem("candidateId"));
   }, []);
