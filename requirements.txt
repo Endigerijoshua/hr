@@ -7,3 +7,6 @@ mediapipe
 librosa
 numpy
 scipy
+pdfplumber
+python-docx
+scikit-learn

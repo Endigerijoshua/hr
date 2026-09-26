@@ -14,30 +14,20 @@ the file came from.
 from __future__ import annotations
 
 import os
-import subprocess
 import tempfile
 
 import requests
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi import FastAPI, UploadFile, File, Form
 
 from .gaze import score_gaze_from_path
 from .lipsync import score_lipsync
+from .liveness import score_liveness_from_path
 from .fusion import to_verification_session_payload
 from ..plagiarism.similarity import score_similarity  # noqa: F401  (used by /plagiarism route below)
 
 app = FastAPI(title="Anti-Gaming Verification Service")
 
 BACKEND_BASE_URL = os.environ.get("BACKEND_BASE_URL", "http://localhost:3000")
-
-
-def _extract_audio(video_path: str) -> str:
-    wav_path = video_path + ".wav"
-    subprocess.run(
-        ["ffmpeg", "-y", "-i", video_path, "-vn", "-acodec", "pcm_s16le", "-ar", "16000", wav_path],
-        check=True,
-        capture_output=True,
-    )
-    return wav_path
 
 
 @app.post("/verify")
@@ -53,11 +43,6 @@ async def verify_submission(submission_id: str = Form(...), clip: UploadFile = F
         with open(video_path, "wb") as f:
             f.write(await clip.read())
 
-        try:
-            audio_path = _extract_audio(video_path)
-        except subprocess.CalledProcessError as e:
-            raise HTTPException(status_code=422, detail=f"could not extract audio: {e.stderr.decode()[:500]}")
-
         # Import here (not at module top) to avoid audio.py's librosa import
         # cost on every server boot if this route is rarely hit — fine to
         # move back to a top-level import if that's not a real concern.
@@ -66,8 +51,9 @@ async def verify_submission(submission_id: str = Form(...), clip: UploadFile = F
         gaze = score_gaze_from_path(video_path)
         lipsync = score_lipsync(video_path)
         audio = score_audio(video_path)
+        liveness = score_liveness_from_path(video_path)
 
-        payload = to_verification_session_payload(submission_id, gaze, lipsync, audio)
+        payload = to_verification_session_payload(submission_id, gaze, lipsync, audio, liveness)
 
     try:
         backend_resp = requests.post(
@@ -85,7 +71,7 @@ async def verify_submission(submission_id: str = Form(...), clip: UploadFile = F
         "sent_to_backend": payload,
         "backend_status": backend_status,
         "backend_response": backend_body,
-        "diagnostics": {"gaze": gaze, "lipsync": lipsync, "audio": audio},
+        "diagnostics": {"gaze": gaze, "lipsync": lipsync, "audio": audio, "liveness": liveness},
     }
 
 

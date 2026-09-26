@@ -249,3 +249,8 @@ def score_gaze(video_path: str, sample_every_n_frames: int = 3) -> dict:
         "mean_deviation_deg": round(float(np.mean(deviations)), 2),
         "max_deviation_deg": round(float(np.max(deviations)), 2),
     }
+
+
+# Back-compat alias: score_gaze_from_path was the pre-L2CS-Net name, still
+# imported by service.py and evaluate.py.
+score_gaze_from_path = score_gaze

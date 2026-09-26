@@ -30,6 +30,7 @@ from pathlib import Path
 from .gaze import score_gaze_from_path
 from .lipsync import score_lipsync
 from .audio import score_audio
+from .liveness import score_liveness_from_path
 from .fusion import fuse
 
 LABELS_PATH = Path(__file__).parent / "labels.json"
@@ -44,7 +45,8 @@ def run_eval(labels_path: Path = LABELS_PATH):
         gaze = score_gaze_from_path(case["video"])
         lipsync = score_lipsync(case["video"])
         audio = score_audio(case["video"])
-        fusion = fuse(gaze["score"], lipsync["score"], audio["score"])
+        liveness = score_liveness_from_path(case["video"])
+        fusion = fuse(gaze["score"], lipsync["score"], audio["score"], liveness["score"])
         predicted_honest = fusion.result == "pass"
         actual_honest = case["label"] == "honest"
         rows.append({
