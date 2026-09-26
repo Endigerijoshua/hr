@@ -64,8 +64,8 @@ async def verify_submission(submission_id: str = Form(...), clip: UploadFile = F
         from .audio import score_audio
 
         gaze = score_gaze_from_path(video_path)
-        lipsync = score_lipsync(video_path, audio_path)
-        audio = score_audio(audio_path)
+        lipsync = score_lipsync(video_path)
+        audio = score_audio(video_path)
 
         payload = to_verification_session_payload(submission_id, gaze, lipsync, audio)
 

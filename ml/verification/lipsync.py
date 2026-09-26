@@ -1,121 +1,162 @@
 """
 Lip-sync consistency check.
 
-Proxy approach (fast enough to build in a hackathon, no pretrained
-lip-sync-specific model required): track the candidate's mouth-aspect-ratio
-(MAR) over time from face-mesh landmarks, extract the speech amplitude
-envelope from the audio track, resample both to a common frame rate, and
-compute their cross-correlation. If someone off-camera is answering while
-the candidate mouths along loosely (or says nothing at all), mouth movement
-and detected speech energy decouple and correlation drops.
+Wraps the pretrained SyncNet model (Chung & Zisserman, joonson/syncnet_python)
+via subprocess, using its own face-tracking + audio-visual sync pipeline
+(demo_syncnet.py) rather than a hand-tuned heuristic. Confirmed working
+locally via:
 
-Same convention as gaze.py: score in [0, 1], 1.0 = consistent/honest.
+    python demo_syncnet.py --videofile data/example.avi --tmp_dir tmp
+
+which printed (among other things):
+
+    AV offset:        3
+    Min dist:         5.358
+    Confidence:       10.081
+
+This module shells out to that same script for each candidate's submission
+video and parses "Confidence:" from its combined stdout/stderr (SyncNet logs
+via Python's `logging` module, which defaults to stderr).
+
+Same convention as gaze.py / audio.py: score in [0, 1], 1.0 = consistent/honest.
+
+Requires the SYNCNET_REPO_DIR environment variable to point at a local
+checkout of joonson/syncnet_python (the one this was tested against; other
+forks may log in a different format and could break the regex below).
 """
 
 from __future__ import annotations
 
-import numpy as np
-import cv2
-import mediapipe as mp
-import librosa
+import os
+import re
+import shutil
+import subprocess
+import tempfile
+import logging
 
-# Mouth landmark indices (MediaPipe FaceMesh, outer lip ring)
-MOUTH_TOP = 13
-MOUTH_BOTTOM = 14
-MOUTH_LEFT = 61
-MOUTH_RIGHT = 291
+logger = logging.getLogger(__name__)
 
-MIN_CORRELATION_FOR_FULL_SCORE = 0.55
-MIN_CORRELATION_FOR_ZERO_SCORE = 0.05
+# --- NOT empirically validated. ---
+# These are placeholder thresholds based on eyeballing the single test clip
+# (example.avi -> confidence 10.081, presumed in-sync). SyncNet's own paper
+# and repo don't publish a single universal pass/fail confidence cutoff --
+# it depends on clip length, face size, video quality, etc. Before trusting
+# these in the paper or in production scoring, run demo_syncnet.py against
+# a handful of known-honest and known-gamed clips and tune against real
+# numbers. Do not present these as validated.
+MIN_CONFIDENCE_FOR_ZERO_SCORE = 2.0   # commonly cited rough floor for "out of sync" in SyncNet literature/discussions
+MAX_CONFIDENCE_FOR_FULL_SCORE = 9.0   # below the 10.081 we observed on a clean known-good clip; leaves headroom
+
+# Matches "Confidence:       10.081" (SyncNet's own logging format, one or
+# more spaces, float). Confirmed against real output above.
+_CONFIDENCE_RE = re.compile(r"Confidence:\s+([\d.]+)")
+
+_DEMO_SCRIPT = "demo_syncnet.py"
+_DEFAULT_TIMEOUT_SECONDS = 300
 
 
-def _mouth_aspect_ratio(landmarks) -> float:
-    top = np.array([landmarks[MOUTH_TOP].x, landmarks[MOUTH_TOP].y])
-    bottom = np.array([landmarks[MOUTH_BOTTOM].x, landmarks[MOUTH_BOTTOM].y])
-    left = np.array([landmarks[MOUTH_LEFT].x, landmarks[MOUTH_LEFT].y])
-    right = np.array([landmarks[MOUTH_RIGHT].x, landmarks[MOUTH_RIGHT].y])
-    width = np.linalg.norm(right - left)
-    if width < 1e-6:
-        return 0.0
-    return float(np.linalg.norm(top - bottom) / width)
+class LipSyncError(RuntimeError):
+    """Raised when the SyncNet subprocess fails or its output can't be parsed."""
 
 
-def _extract_mouth_series(video_path: str, fps_target: float = 10.0) -> tuple[np.ndarray, float]:
-    cap = cv2.VideoCapture(video_path)
-    src_fps = cap.get(cv2.CAP_PROP_FPS) or 30.0
-    step = max(1, round(src_fps / fps_target))
+def _repo_dir() -> str:
+    repo_dir = os.environ.get("SYNCNET_REPO_DIR")
+    if not repo_dir:
+        raise LipSyncError(
+            "SYNCNET_REPO_DIR is not set. Point it at your local "
+            "joonson/syncnet_python checkout, e.g. "
+            r'$env:SYNCNET_REPO_DIR = "C:\Users\localadmin\hr\syncnet_python"'
+        )
+    if not os.path.isdir(repo_dir):
+        raise LipSyncError(f"SYNCNET_REPO_DIR does not exist: {repo_dir}")
+    return repo_dir
 
-    face_mesh = mp.solutions.face_mesh.FaceMesh(
-        static_image_mode=False, max_num_faces=1, min_detection_confidence=0.5
-    )
 
-    mar_series = []
-    i = 0
+def _run_demo_syncnet(video_path: str, tmp_dir: str, repo_dir: str) -> str:
+    """Runs demo_syncnet.py and returns combined stdout+stderr as text."""
+    cmd = [
+        "python",
+        _DEMO_SCRIPT,
+        "--videofile", os.path.abspath(video_path),
+        "--tmp_dir", os.path.abspath(tmp_dir),
+    ]
     try:
-        while True:
-            ok, frame = cap.read()
-            if not ok:
-                break
-            if i % step == 0:
-                rgb = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
-                result = face_mesh.process(rgb)
-                if result.multi_face_landmarks:
-                    mar_series.append(_mouth_aspect_ratio(result.multi_face_landmarks[0].landmark))
-                else:
-                    mar_series.append(np.nan)
-            i += 1
+        result = subprocess.run(
+            cmd,
+            cwd=repo_dir,
+            capture_output=True,
+            text=True,
+            timeout=_DEFAULT_TIMEOUT_SECONDS,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise LipSyncError(
+            f"demo_syncnet.py timed out after {_DEFAULT_TIMEOUT_SECONDS}s on {video_path}"
+        ) from exc
+    except FileNotFoundError as exc:
+        raise LipSyncError(
+            f"Could not find/run {_DEMO_SCRIPT} in {repo_dir} -- check SYNCNET_REPO_DIR"
+        ) from exc
+
+    combined = (result.stdout or "") + "\n" + (result.stderr or "")
+
+    if result.returncode != 0:
+        raise LipSyncError(
+            f"demo_syncnet.py exited with code {result.returncode} on {video_path}.\n"
+            f"--- output ---\n{combined}"
+        )
+
+    return combined
+
+
+def _parse_confidence(output: str) -> float:
+    matches = _CONFIDENCE_RE.findall(output)
+    if not matches:
+        raise LipSyncError(
+            "Could not find 'Confidence:' in demo_syncnet.py output -- "
+            "output format may not match this repo/fork.\n"
+            f"--- output ---\n{output}"
+        )
+    # If multiple faces/tracks were detected, demo_syncnet.py can print more
+    # than one confidence line. Take the last one (final/summary track) --
+    # revisit this if candidate videos ever have multiple people in frame.
+    return float(matches[-1])
+
+
+def _confidence_to_score(confidence: float) -> float:
+    if confidence <= MIN_CONFIDENCE_FOR_ZERO_SCORE:
+        return 0.0
+    if confidence >= MAX_CONFIDENCE_FOR_FULL_SCORE:
+        return 1.0
+    span = MAX_CONFIDENCE_FOR_FULL_SCORE - MIN_CONFIDENCE_FOR_ZERO_SCORE
+    return (confidence - MIN_CONFIDENCE_FOR_ZERO_SCORE) / span
+
+
+def score_lipsync(video_path: str) -> dict:
+    """
+    video_path: submission video with an embedded audio track. demo_syncnet.py
+        extracts both video frames and audio from this one file internally --
+        no separate audio_path needed (unlike the old MAR-heuristic version).
+
+    Returns dict with:
+        score: float in [0, 1], 1.0 = consistent/honest
+        confidence: raw SyncNet confidence value, or None if scoring failed
+        note: present only on a non-fatal fallback (e.g. couldn't parse output)
+    """
+    repo_dir = _repo_dir()
+    tmp_dir = tempfile.mkdtemp(prefix="syncnet_")
+
+    try:
+        output = _run_demo_syncnet(video_path, tmp_dir, repo_dir)
+        confidence = _parse_confidence(output)
+    except LipSyncError as exc:
+        logger.warning("lipsync scoring failed for %s: %s", video_path, exc)
+        # Fail toward "flagged for human review", not toward "pass" or
+        # "auto-fail" -- consistent with the architecture contract's
+        # nothing-auto-rejects rule. 0.5 keeps this signal neutral so
+        # fusion.py doesn't let a scoring bug alone sink the candidate.
+        return {"score": 0.5, "confidence": None, "note": f"scoring failed: {exc}"}
     finally:
-        cap.release()
-        face_mesh.close()
+        shutil.rmtree(tmp_dir, ignore_errors=True)
 
-    return np.array(mar_series, dtype=float), src_fps / step
-
-
-def _extract_audio_envelope(audio_path: str, fps_target: float = 10.0) -> np.ndarray:
-    y, sr = librosa.load(audio_path, sr=None, mono=True)
-    hop_length = max(1, round(sr / fps_target))
-    rms = librosa.feature.rms(y=y, hop_length=hop_length)[0]
-    return rms
-
-
-def score_lipsync(video_path: str, audio_path: str) -> dict:
-    """
-    video_path: video-only or combined file readable by cv2 for frames.
-    audio_path: audio track (can be the same file if it has an audio stream
-        and you extract it upstream with ffmpeg before calling this).
-    """
-    mar_series, mouth_fps = _extract_mouth_series(video_path)
-    audio_env = _extract_audio_envelope(audio_path, fps_target=mouth_fps)
-
-    # Align lengths
-    n = min(len(mar_series), len(audio_env))
-    if n < 5:
-        return {"score": 0.5, "correlation": None, "note": "insufficient signal to score"}
-
-    mar = mar_series[:n]
-    env = audio_env[:n]
-
-    valid = ~np.isnan(mar)
-    if valid.sum() < 5:
-        return {"score": 0.5, "correlation": None, "note": "face not detected for most of clip"}
-
-    mar = mar[valid]
-    env = env[valid]
-
-    if np.std(mar) < 1e-6 or np.std(env) < 1e-6:
-        # No mouth movement or no audio energy at all — can't correlate
-        # meaningfully. Flag rather than guess.
-        return {"score": 0.3, "correlation": 0.0, "note": "flat signal (no movement or no audio)"}
-
-    correlation = float(np.corrcoef(mar, env)[0, 1])
-    correlation = max(0.0, correlation)  # negative correlation is not "extra honest"
-
-    if correlation >= MIN_CORRELATION_FOR_FULL_SCORE:
-        score = 1.0
-    elif correlation <= MIN_CORRELATION_FOR_ZERO_SCORE:
-        score = 0.0
-    else:
-        span = MIN_CORRELATION_FOR_FULL_SCORE - MIN_CORRELATION_FOR_ZERO_SCORE
-        score = (correlation - MIN_CORRELATION_FOR_ZERO_SCORE) / span
-
-    return {"score": round(float(score), 3), "correlation": round(correlation, 3)}
+    score = _confidence_to_score(confidence)
+    return {"score": round(score, 3), "confidence": round(confidence, 3)}

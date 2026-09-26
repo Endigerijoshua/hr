@@ -42,8 +42,8 @@ def run_eval(labels_path: Path = LABELS_PATH):
     rows = []
     for case in cases:
         gaze = score_gaze_from_path(case["video"])
-        lipsync = score_lipsync(case["video"], case["audio"])
-        audio = score_audio(case["audio"])
+        lipsync = score_lipsync(case["video"])
+        audio = score_audio(case["video"])
         fusion = fuse(gaze["score"], lipsync["score"], audio["score"])
         predicted_honest = fusion.result == "pass"
         actual_honest = case["label"] == "honest"
