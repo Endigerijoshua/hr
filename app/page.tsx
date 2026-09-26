@@ -35,6 +35,11 @@ export default function Home() {
         <a href="/jobs">Jobs</a>
       </nav>
 
+      <p className="valueprop">
+        Shortlist the top 20% of applicants automatically — and catch the ones holding a
+        prerecorded clip to the webcam before they ever reach your shortlist.
+      </p>
+
       <p className="muted">
         Live video verification plus a ranked shortlist. Every candidate is scored on gaze, lip-sync,
         audio and liveness before they reach the recruiter&apos;s table, so a stolen or AI-generated

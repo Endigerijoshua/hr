@@ -48,6 +48,9 @@ export default function JobCandidatesPage({ params }: { params: Promise<{ jobId:
   }, [jobId]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time
+    // client-side hydration from window/query params on mount, not a
+    // render-loop risk
     load();
   }, [load]);
 

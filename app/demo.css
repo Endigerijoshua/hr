@@ -319,6 +319,17 @@ tbody tr.shortlisted td {
   margin: var(--s4) 0 var(--s2);
 }
 
+.valueprop {
+  font-size: 20px;
+  line-height: 1.4;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  max-width: 62ch;
+  margin: 0 0 var(--s4);
+  padding-left: var(--s3);
+  border-left: 3px solid var(--brand);
+}
+
 .muted {
   color: var(--ink-soft);
 }

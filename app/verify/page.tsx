@@ -6,10 +6,10 @@ import "../demo.css";
 const DEFAULT_SECS = 15;
 
 function verdict(result: string | undefined) {
-  if (!result) return { text: "Not verified âŒ", cls: "no" };
-  if (result === "pass") return { text: "Verified âœ…", cls: "yes" };
-  if (result === "review") return { text: "Flagged for review âš ï¸", cls: "no" };
-  return { text: "Not verified âŒ", cls: "no" };
+  if (!result) return { text: "Not verified", cls: "fail" };
+  if (result === "pass") return { text: "Verified", cls: "pass" };
+  if (result === "review") return { text: "Flagged for review", cls: "flagged" };
+  return { text: "Not verified", cls: "fail" };
 }
 
 export default function VerifyPage() {
@@ -23,6 +23,9 @@ export default function VerifyPage() {
 
   useEffect(() => {
     const requested = Number(new URLSearchParams(window.location.search).get("secs"));
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- one-time
+    // client-side hydration from window/query params on mount, not a
+    // render-loop risk
     if (requested > 0) setSecs(requested);
     setCandidateId(localStorage.getItem("candidateId"));
   }, []);
@@ -88,7 +91,7 @@ export default function VerifyPage() {
       </nav>
 
       <p className="muted">
-        Candidate: <strong>{candidateId ?? "none â€” go to /signup first"}</strong> Â· clip length {secs}s
+        Candidate: <strong>{candidateId ?? "none — go to /signup first"}</strong> · clip length {secs}s
       </p>
 
       <div className="toolbar">
@@ -100,6 +103,29 @@ export default function VerifyPage() {
 
 
       <video ref={videoRef} width={480} muted playsInline />
+
+      {(phase === "uploading" || phase === "recording") && (
+        <div className="loading" role="status" aria-live="polite">
+          <div className="spinner" aria-hidden="true" />
+          <div>
+            <strong>
+              {phase === "recording"
+                ? `Recording — ${left}s left`
+                : "Scoring your clip (60-90s)…"}
+            </strong>
+            <div className="muted">
+              {phase === "recording"
+                ? "Keep your face centred and speak a short answer."
+                : "Running the gaze, lip-sync, audio and liveness models. Keep this tab focused."}
+            </div>
+            {phase === "uploading" && (
+              <div className="progress" aria-hidden="true">
+                <span />
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {result && (
         <p>
