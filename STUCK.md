@@ -1,5 +1,35 @@
 # STUCK — verification loop halted on the 30-minute stop condition
 
+> **UPDATE — RESOLVED. Read this first; the body below is the historical record
+> and its "not clean / nothing pushed" status is now OUT OF DATE.**
+>
+> Follow-up round (20-min budget) fixed everything this file reported as broken:
+>
+> | Item | Was | Now |
+> |---|---|---|
+> | `npx tsc --noEmit` | pass | **pass**, 0 errors |
+> | `npx eslint` | **4 errors** | **0 errors, 0 warnings** |
+> | `npm run build` | **never run** | **passes**, 14 routes, 22.0s |
+> | Prisma migration | `db push` only, no migration file | **real migration** `20260926192151_add_candidate_skills` created and applied |
+>
+> Cause of the 4 lint errors, for the record: 3 were genuine
+> `react-hooks/set-state-in-effect` hits on mount-time `localStorage` /
+> `query-param` hydration, now carrying deliberate single-line
+> `eslint-disable-next-line` suppressions (rationale documented in `SETUP.md`
+> §8, including the caveat that it bypasses the React Compiler optimisation).
+> The 4th was `shot.cjs`, a scratch screenshot helper, simply deleted.
+>
+> **Trap worth remembering:** the first attempt at those suppressions used a
+> 3-line comment block. `eslint-disable-next-line` binds only to the line
+> *immediately* after the comment, so the directive applied to the comment's last
+> line instead of the code — producing 3 errors *plus* 3 new
+> "Unused eslint-disable directive" warnings. It must be a single line.
+>
+> Pushed: `3c25e86`, `d1de8f0`.
+
+---
+
+
 **Status: STOPPED by time limit. NOT verified clean. Nothing pushed this round.**
 **Work started:** Saturday, September 26, 2026 11:40:47 PM
 **Loop started:** Saturday, September 26, 2026 11:48:24 PM
