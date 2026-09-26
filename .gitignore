@@ -31,6 +31,13 @@ syncnet_python/
 .DS_Store
 *.pem
 
+# --- local scratch artefacts (NOT the committed demo asset) ---
+# test_clip.* and shot-*.png are local debug output. Note that demo_clip.mp4 is
+# deliberately NOT ignored: DEMO_SCRIPT.md documents it as the fallback-C asset
+# and a fresh clone needs it to run that path.
+test_clip.*
+shot-*.png
+
 # debug
 npm-debug.log*
 yarn-debug.log*
