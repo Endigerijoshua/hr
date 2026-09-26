@@ -127,9 +127,11 @@ That is a long time to stand on stage. Two options:
 ### What you'll actually see — read this before you demo
 
 **The verdict on a live recording is `flagged`, not `pass`.** On this machine
-`demo_clip.mp4` scores gaze `0.0`, lip-sync `0.5`, audio `1.0`, liveness `0.5`
-→ fused `0.525`, and anything in the ambiguous middle band routes to
-`Flagged for review ⚠️` rather than a green pass.
+`demo_clip.mp4` scores gaze `0.0`, lip-sync `0.5`, audio `1.0`, liveness `1.0`
+→ fused `0.725`, and anything short of the `0.80` pass threshold routes to
+`Flagged for review` rather than a green pass. (Re-measured after the
+opencv-python-headless downgrade fixed the liveness CNN; it was `0.5`/fused
+`0.525` while liveness was still erroring on OpenCV 5.)
 
 That is **correct product behaviour** — the fusion docstring is explicit that
 nothing is auto-rejected, it is routed to a human. Present it that way:
