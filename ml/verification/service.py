@@ -29,6 +29,24 @@ app = FastAPI(title="Anti-Gaming Verification Service")
 
 BACKEND_BASE_URL = os.environ.get("BACKEND_BASE_URL", "http://localhost:3000")
 
+# A scorer that can't run (missing model weights, missing SYNCNET_REPO_DIR, an
+# OpenCV/torch version skew) must NOT take the whole request down. Fusion treats
+# 0.5 as "no information" and routes the submission to human review, which is
+# the correct outcome for an incomplete signal -- much better than a 500 that
+# leaves the candidate with no verdict at all.
+NEUTRAL = 0.5
+
+
+def _safe(name: str, fn, *args, **kwargs) -> dict:
+    try:
+        return fn(*args, **kwargs)
+    except Exception as e:  # noqa: BLE001 - deliberately broad; see note above
+        return {
+            "score": NEUTRAL,
+            "error": f"{type(e).__name__}: {e}",
+            "note": f"{name} scorer unavailable; defaulted to neutral {NEUTRAL} for human review",
+        }
+
 
 @app.post("/verify")
 async def verify_submission(submission_id: str = Form(...), clip: UploadFile = File(...)):
@@ -48,10 +66,10 @@ async def verify_submission(submission_id: str = Form(...), clip: UploadFile = F
         # move back to a top-level import if that's not a real concern.
         from .audio import score_audio
 
-        gaze = score_gaze_from_path(video_path)
-        lipsync = score_lipsync(video_path)
-        audio = score_audio(video_path)
-        liveness = score_liveness_from_path(video_path)
+        gaze = _safe("gaze", score_gaze_from_path, video_path)
+        lipsync = _safe("lipsync", score_lipsync, video_path)
+        audio = _safe("audio", score_audio, video_path)
+        liveness = _safe("liveness", score_liveness_from_path, video_path)
 
         payload = to_verification_session_payload(submission_id, gaze, lipsync, audio, liveness)
 

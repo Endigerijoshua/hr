@@ -1,0 +1,429 @@
+.wrap {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px 16px 48px;
+  font-family: system-ui, -apple-system, Segoe UI, sans-serif;
+  color: #111;
+}
+
+.wrap h1 {
+  font-size: 24px;
+  margin: 0 0 4px;
+}
+
+.nav {
+  display: flex;
+  gap: 12px;
+  margin: 8px 0 24px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #ddd;
+}
+
+.nav a {
+  color: #0645ad;
+  text-decoration: none;
+}
+
+.nav a:hover {
+  text-decoration: underline;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 480px;
+}
+
+label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+input,
+select,
+textarea {
+  padding: 6px 8px;
+  border: 1px solid #bbb;
+  border-radius: 4px;
+  font: inherit;
+  font-weight: 400;
+}
+
+textarea {
+  min-height: 70px;
+}
+
+button {
+  align-self: flex-start;
+  padding: 7px 14px;
+  border: 1px solid #888;
+  border-radius: 4px;
+  background: #f4f4f4;
+  font: inherit;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  background: #e8e8e8;
+}
+
+button:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.status {
+  margin-top: 16px;
+  padding: 8px 10px;
+  border-left: 3px solid #888;
+  background: #fafafa;
+  font-size: 14px;
+  white-space: pre-wrap;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 8px;
+}
+
+th,
+td {
+  padding: 7px 9px;
+  border-bottom: 1px solid #e2e2e2;
+  text-align: left;
+  font-size: 14px;
+}
+
+th {
+  background: #f6f6f6;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.badge {
+  display: inline-block;
+  padding: 1px 7px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  background: #999;
+}
+
+.badge.yes {
+  background: #1a7f37;
+}
+
+.badge.no {
+  background: #b42318;
+}
+
+.toolbar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin: 16px 0 4px;
+}
+
+.muted {
+  color: #666;
+  font-size: 13px;
+}
+
+.rank {
+  color: #666;
+  font-size: 12px;
+}
+
+/* ---------------------------------------------------------------------------
+   Demo theme. One palette + one spacing scale, shared by every page so the
+   app reads as a single product rather than five separate pages.
+   Kept to plain CSS (no Tailwind, no new deps) per the brief.
+   --------------------------------------------------------------------------- */
+
+:root {
+  --ink: #0f172a;
+  --ink-soft: #475569;
+  --ink-faint: #94a3b8;
+  --line: #e2e8f0;
+  --surface: #ffffff;
+  --canvas: #f8fafc;
+  --brand: #1d4ed8;
+  --brand-dark: #1e3a8a;
+
+  --pass: #15803d;
+  --pass-bg: #dcfce7;
+  --flag: #b45309;
+  --flag-bg: #fef3c7;
+  --fail: #b91c1c;
+  --fail-bg: #fee2e2;
+
+  --s1: 4px;
+  --s2: 8px;
+  --s3: 12px;
+  --s4: 16px;
+  --s5: 24px;
+  --s6: 32px;
+}
+
+body {
+  background: var(--canvas);
+  color: var(--ink);
+}
+
+.wrap {
+  max-width: 1080px;
+  padding: var(--s6) var(--s5) var(--s6);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  color: var(--ink);
+}
+
+.wrap h1 {
+  font-size: 26px;
+  letter-spacing: -0.02em;
+  margin: 0 0 var(--s1);
+}
+
+.wrap h2 {
+  font-size: 17px;
+  margin: var(--s5) 0 var(--s3);
+}
+
+.nav {
+  gap: var(--s4);
+  margin: var(--s3) 0 var(--s5);
+  padding-bottom: var(--s3);
+  border-bottom: 1px solid var(--line);
+}
+
+.nav a {
+  color: var(--ink-soft);
+  font-weight: 500;
+}
+
+.nav a:hover {
+  color: var(--brand);
+  text-decoration: none;
+}
+
+button {
+  border: 1px solid var(--brand);
+  border-radius: 6px;
+  background: var(--brand);
+  color: #fff;
+  font-weight: 500;
+  padding: 8px 16px;
+}
+
+button:hover:not(:disabled) {
+  background: var(--brand-dark);
+  border-color: var(--brand-dark);
+}
+
+table {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  overflow: hidden;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+th {
+  background: #f1f5f9;
+  color: var(--ink-soft);
+  border-bottom: 1px solid var(--line);
+  padding: 10px 12px;
+}
+
+th,
+td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--line);
+}
+
+tbody tr:last-child td {
+  border-bottom: none;
+}
+
+tbody tr:hover {
+  background: #f8fafc;
+}
+
+/* Shortlisted applicants are meant to be findable from across the room, so the
+   whole row is tinted and given a solid left rule — not just a text badge. */
+tbody tr.shortlisted {
+  background: #eff6ff;
+  box-shadow: inset 3px 0 0 0 var(--brand);
+}
+
+tbody tr.shortlisted:hover {
+  background: #e0ecff;
+}
+
+tbody tr.shortlisted td {
+  font-weight: 500;
+}
+
+.status {
+  border-left: 3px solid var(--brand);
+  background: var(--surface);
+  border-radius: 0 6px 6px 0;
+  color: var(--ink-soft);
+}
+
+/* Verified / flagged / fail read at a glance: solid saturated fill, white
+   text, generous padding — legible from the back of a room. */
+.badge {
+  padding: 4px 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #fff;
+  background: var(--ink-faint);
+}
+
+.badge.pass {
+  background: var(--pass);
+}
+
+.badge.flagged {
+  background: var(--flag);
+}
+
+.badge.fail {
+  background: var(--fail);
+}
+
+.badge.yes {
+  background: var(--pass);
+}
+
+.badge.no {
+  background: #64748b;
+}
+
+.toolbar {
+  margin: var(--s4) 0 var(--s2);
+}
+
+.muted {
+  color: var(--ink-soft);
+}
+
+/* Verdict pill in the results table — tinted fill + matching text, so the
+   colour is reinforced by the word and does not rely on hue alone. */
+.verdict {
+  display: inline-block;
+  padding: 4px 11px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.verdict.pass {
+  background: var(--pass-bg);
+  color: var(--pass);
+}
+
+.verdict.flagged {
+  background: var(--flag-bg);
+  color: var(--flag);
+}
+
+.verdict.fail {
+  background: var(--fail-bg);
+  color: var(--fail);
+}
+
+.skillbar {
+  position: relative;
+  height: 6px;
+  width: 90px;
+  border-radius: 3px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.skillbar > span {
+  display: block;
+  height: 100%;
+  background: var(--brand);
+}
+
+/* Loading state for the ML scoring step. A static "Scoring..." line reads as a
+   frozen page, so it gets a real spinner and a progress sweep. */
+.loading {
+  display: flex;
+  align-items: center;
+  gap: var(--s3);
+  margin-top: var(--s4);
+  padding: var(--s4);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+}
+
+.spinner {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  border: 3px solid var(--line);
+  border-top-color: var(--brand);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.progress {
+  margin-top: var(--s3);
+  height: 5px;
+  border-radius: 3px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.progress > span {
+  display: block;
+  height: 100%;
+  width: 40%;
+  border-radius: 3px;
+  background: var(--brand);
+  animation: sweep 1.4s ease-in-out infinite;
+}
+
+@keyframes sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(250%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner,
+  .progress > span {
+    animation: none;
+  }
+}
+

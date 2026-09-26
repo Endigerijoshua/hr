@@ -2,6 +2,15 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { jsonError, missingFields } from "@/lib/api";
 
+export async function GET() {
+  try {
+    const candidates = await prisma.candidate.findMany({ orderBy: { name: "asc" } });
+    return NextResponse.json(candidates);
+  } catch (error) {
+    return jsonError(error);
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();
@@ -15,6 +24,7 @@ export async function POST(request: Request) {
         name: body.name,
         email: body.email,
         domain: body.domain,
+        skills: body.skills ?? "",
         resumeFileUrl: body.resumeFileUrl ?? null,
       },
     });

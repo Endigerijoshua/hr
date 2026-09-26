@@ -57,6 +57,17 @@ def _load_predictor():
         )
 
     sys.path.insert(0, str(VENDORED_REPO))
+
+    # The vendored repo targets an older OpenCV and calls
+    # cv2.dnn.readNetFromCaffe, which newer OpenCV builds no longer expose
+    # (only readNet / readNetFromONNX remain). readNet auto-detects the format
+    # from the file, so it is a drop-in. Shim before importing their modules,
+    # otherwise AntiSpoofPredict.__init__ dies with an AttributeError.
+    import cv2
+
+    if not hasattr(cv2.dnn, "readNetFromCaffe"):
+        cv2.dnn.readNetFromCaffe = cv2.dnn.readNet  # type: ignore[attr-defined]
+
     from src.anti_spoof_predict import AntiSpoofPredict  # noqa: E402
     from src.generate_patches import CropImage  # noqa: E402
 
@@ -75,9 +86,11 @@ def _load_predictor():
 
 def _score_frame(frame_bgr: np.ndarray) -> float | None:
     """Returns P(real face) in [0, 1] for one frame, or None if no face found."""
-    from src.utility import parse_model_name  # available on sys.path after _load_predictor()
-
+    # _load_predictor() must run first: it is what puts VENDORED_REPO on
+    # sys.path, so the `src.*` imports below can't resolve until then.
     predictor, cropper = _load_predictor()
+    from src.utility import parse_model_name
+
     model_dir = VENDORED_REPO / "resources" / "anti_spoof_models"
 
     bbox = predictor.get_bbox(frame_bgr)

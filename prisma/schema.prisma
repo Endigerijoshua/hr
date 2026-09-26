@@ -15,6 +15,10 @@ model Candidate {
   name                 String
   email                String                @unique
   domain               String
+  /// Comma-separated skills extracted from the resume. Stored (not just kept
+  /// in the PDF) so the shortlist scorer can measure overlap against a job's
+  /// requiredSkills — without it, quality is invisible to ranking.
+  skills               String                @default("")
   resumeFileUrl        String?
   verified             Boolean               @default(false)
   applications         Application[]

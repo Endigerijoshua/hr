@@ -4,6 +4,30 @@ import { jsonError, missingFields, toNumber } from "@/lib/api";
 
 const SCORE_FIELDS = ["gazeScore", "lipSyncScore", "audioScore", "livenessScore"] as const;
 
+/** Latest session per candidate, so the ranking table can badge each
+ *  applicant pass/flagged/fail instead of only knowing the boolean
+ *  Candidate.verified. Ordered oldest-first so the last write per candidateId
+ *  in the client-side reduce is the most recent one. */
+export async function GET() {
+  try {
+    const sessions = await prisma.verificationSession.findMany({
+      orderBy: { id: "asc" },
+      select: {
+        candidateId: true,
+        result: true,
+        gazeScore: true,
+        lipSyncScore: true,
+        audioScore: true,
+        livenessScore: true,
+        reviewedByHR: true,
+      },
+    });
+    return NextResponse.json(sessions);
+  } catch (error) {
+    return jsonError(error);
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();

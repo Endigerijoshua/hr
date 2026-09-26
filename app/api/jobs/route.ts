@@ -2,6 +2,15 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { jsonError, missingFields } from "@/lib/api";
 
+export async function GET() {
+  try {
+    const jobs = await prisma.job.findMany({ orderBy: { id: "asc" } });
+    return NextResponse.json(jobs);
+  } catch (error) {
+    return jsonError(error);
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json();

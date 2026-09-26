@@ -1,69 +1,68 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+import Link from "next/link";
+import "./demo.css";
+
+const STEPS = [
+  {
+    href: "/post-job",
+    title: "1. Recruiter posts a job",
+    body: "Company, title, domain, description, required skills. Lands you on the applicant table.",
+  },
+  {
+    href: "/signup",
+    title: "2. Candidate signs up + uploads resume",
+    body: "Name, email, domain, resume file. Your candidate id is stored in the browser.",
+  },
+  {
+    href: "/verify",
+    title: "3. Candidate passes live verification",
+    body: "Webcam + mic recording scored for gaze, lip-sync, audio and liveness. Sets the verified badge.",
+  },
+  {
+    href: "/jobs",
+    title: "4. Candidate applies to the job",
+    body: "One click from the open-jobs table.",
+  },
+];
 
 export default function Home() {
   return (
-    <div className={styles.page}>
-      <main className={styles.main}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className={styles.intro}>
-          <h1>
-            To get started, edit the{" "}
-            <code className={styles.code}>page.tsx</code> file.
-          </h1>
-          <p>
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className={styles.ctas}>
-          <a
-            className={styles.primary}
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className={styles.logo}
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className={styles.secondary}
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+    <main className="wrap">
+      <h1>NextGen — verified, anti-gaming candidate screening</h1>
+      <nav className="nav">
+        <a href="/post-job">Post job</a>
+        <a href="/signup">Signup</a>
+        <a href="/verify">Verify</a>
+        <a href="/jobs">Jobs</a>
+      </nav>
+
+      <p className="muted">
+        Live video verification plus a ranked shortlist. Every candidate is scored on gaze, lip-sync,
+        audio and liveness before they reach the recruiter&apos;s table, so a stolen or AI-generated
+        clip shows up as a red badge instead of a name on a list.
+      </p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Step</th>
+            <th>What happens</th>
+            <th />
+          </tr>
+        </thead>
+        <tbody>
+          {STEPS.map((s) => (
+            <tr key={s.href}>
+              <td>
+                <strong>{s.title}</strong>
+                <div className="muted">{s.body}</div>
+              </td>
+              <td>
+                <Link href={s.href}>Open →</Link>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </main>
   );
 }
